@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from src.database import engine
 from src.models import Base
 from src.routers import forecasting, ingestion, production
+from src.routers import definitions, inventory, invoices
 
 
 @asynccontextmanager
@@ -26,6 +27,9 @@ app = FastAPI(
 app.include_router(ingestion.router)
 app.include_router(production.router)
 app.include_router(forecasting.router)
+app.include_router(definitions.router)
+app.include_router(invoices.router)
+app.include_router(inventory.router)
 
 
 @app.get("/")

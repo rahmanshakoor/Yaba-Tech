@@ -1,6 +1,7 @@
 import enum
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     Enum,
@@ -31,6 +32,7 @@ class Item(Base):
     unit = Column(String, nullable=False)  # kg, liter, etc.
     shelf_life_days = Column(Integer, nullable=False, default=0)
     type = Column(Enum(ItemType), nullable=False)
+    is_archived = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     compositions_as_output = relationship(
@@ -137,6 +139,7 @@ class Invoice(Base):
     invoice_id = Column(Integer, primary_key=True, autoincrement=True)
     supplier_name = Column(String, nullable=False)
     total_cost = Column(Float, nullable=False, default=0.0)
+    invoice_date = Column(DateTime, nullable=True)
     image_url = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
