@@ -140,7 +140,8 @@ async def test_waste_creates_financial_loss_record(db_session):
 
     # Log 3kg of waste as spoiled
     waste_quantity = 3.0
-    cost_loss = waste_quantity * 1.0  # unit_cost = 1.0 (quantity_initial / quantity_initial)
+    # Cost uses placeholder unit cost of 1.0 (matches implementation)
+    cost_loss = waste_quantity * 1.0
 
     batch.quantity_current -= waste_quantity
 

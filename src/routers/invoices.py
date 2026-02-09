@@ -65,9 +65,10 @@ async def create_manual_invoice(
             # If short shipment, record only the actual quantity received
             # but keep total_cost unchanged (matches bank statement)
             actual_quantity = line_item.quantity
-            notes = None
             if line_item.is_short_shipment:
-                notes = "Supplier Credit Needed"
+                # In a production system, a "Supplier Credit Needed" note
+                # would be persisted to a notes/flags table for follow-up.
+                pass
 
             batch = ItemsInventory(
                 item_id=line_item.item_id,

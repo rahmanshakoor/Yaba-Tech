@@ -126,10 +126,11 @@ async def log_waste(
         )
 
     # Calculate cost loss proportionally from the batch
+    # Note: Without per-unit cost data on batches, we use a unit cost of 1.0
+    # as a placeholder. In a production system, this would be derived from the
+    # source invoice's line item cost.
     if batch.quantity_initial > 0:
-        unit_cost = (batch.quantity_initial * 1.0) / batch.quantity_initial
-        # Use source invoice cost if available, otherwise estimate per-unit
-        cost_loss = request.quantity * unit_cost
+        cost_loss = request.quantity * 1.0
     else:
         cost_loss = 0.0
 
