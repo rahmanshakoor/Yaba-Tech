@@ -13,20 +13,71 @@ class ItemCreate(BaseModel):
     type: ItemType
 
 
+class ItemUpdate(BaseModel):
+    name: Optional[str] = None
+    unit: Optional[str] = None
+    shelf_life_days: Optional[int] = None
+
+
 class ItemResponse(BaseModel):
     item_id: int
     name: str
     unit: str
     shelf_life_days: int
     type: ItemType
+    is_archived: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class RecipeIngredient(BaseModel):
+    input_item_id: int
+    quantity_required: float
+
+
+class RecipeIngredientResponse(BaseModel):
+    composition_id: int
+    input_item_id: int
+    input_item_name: str
+    quantity_required: float
+
+    model_config = {"from_attributes": True}
+
+
+class RecipeResponse(BaseModel):
+    output_item_id: int
+    output_item_name: str
+    ingredients: list[RecipeIngredientResponse]
 
 
 class ItemCompositionCreate(BaseModel):
     output_item_id: int
     input_item_id: int
     quantity_required: float
+
+
+class ManualInvoiceLineItem(BaseModel):
+    item_id: int
+    quantity: float
+    unit_cost: float
+
+
+class ManualInvoiceCreate(BaseModel):
+    supplier_name: str
+    date: Optional[str] = None
+    total_cost: float
+    items: list[ManualInvoiceLineItem]
+
+
+class InvoiceResponse(BaseModel):
+    invoice_id: int
+    supplier_name: str
+    total_cost: float
+    invoice_date: Optional[datetime] = None
+    image_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
 
 
 class ProductionRequest(BaseModel):
@@ -57,6 +108,27 @@ class InventoryBatchResponse(BaseModel):
     expiration_date: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+class InventorySummaryItem(BaseModel):
+    item_id: int
+    item_name: str
+    unit: str
+    total_stock: float
+
+
+class InventorySummaryResponse(BaseModel):
+    items: list[InventorySummaryItem]
+
+
+class BatchUpdateRequest(BaseModel):
+    quantity_current: float
+
+
+class ManualProductionRequest(BaseModel):
+    output_item_id: int
+    quantity_to_produce: float
+    input_batches: Optional[list[dict]] = None
 
 
 class ReorderRecommendation(BaseModel):
