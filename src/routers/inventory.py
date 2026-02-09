@@ -24,7 +24,7 @@ async def inventory_summary(
     db: AsyncSession = Depends(get_db),
 ):
     """Returns current total stock grouped by Item."""
-    items_result = await db.execute(select(Item).where(Item.is_archived == False))  # noqa: E712
+    items_result = await db.execute(select(Item).where(Item.is_archived.is_(False)))
     items = items_result.scalars().all()
 
     summary_items = []

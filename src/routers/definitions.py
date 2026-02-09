@@ -27,7 +27,7 @@ async def list_items(
     db: AsyncSession = Depends(get_db),
 ):
     """List items with optional type filter (Raw/Prepped/Dish)."""
-    query = select(Item).where(Item.is_archived == False)  # noqa: E712
+    query = select(Item).where(Item.is_archived.is_(False))
     if type is not None:
         query = query.where(Item.type == type)
     result = await db.execute(query)
