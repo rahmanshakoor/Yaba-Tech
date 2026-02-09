@@ -24,6 +24,13 @@ class ItemType(str, enum.Enum):
     DISH = "Dish"
 
 
+class WasteReason(str, enum.Enum):
+    SPOILED = "Spoiled"
+    DROPPED = "Dropped"
+    BURNED = "Burned"
+    THEFT = "Theft"
+
+
 class Item(Base):
     __tablename__ = "items"
 
@@ -147,3 +154,19 @@ class Invoice(Base):
     inventory_batches = relationship(
         "ItemsInventory", back_populates="source_invoice"
     )
+
+
+class WasteLog(Base):
+    __tablename__ = "waste_logs"
+
+    waste_id = Column(Integer, primary_key=True, autoincrement=True)
+    batch_id = Column(
+        Integer, ForeignKey("items_inventory.batch_id"), nullable=False
+    )
+    quantity = Column(Float, nullable=False)
+    reason = Column(Enum(WasteReason), nullable=False)
+    cost_loss = Column(Float, nullable=False, default=0.0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationships
+    batch = relationship("ItemsInventory")

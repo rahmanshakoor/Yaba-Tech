@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.models import Item, ItemsInventory
+from src.models import Item, ItemsInventory, WasteLog
 from src.schemas import (
     BatchUpdateRequest,
     InventoryBatchResponse,
@@ -13,6 +13,8 @@ from src.schemas import (
     InventorySummaryResponse,
     ManualProductionRequest,
     ProductionResponse,
+    WasteRequest,
+    WasteResponse,
 )
 from src.services.inventory_service import produce_item
 
@@ -102,3 +104,44 @@ async def manual_production(
         return ProductionResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/waste", response_model=WasteResponse, status_code=201)
+async def log_waste(
+    request: WasteRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Log waste: deduct quantity from a batch and record the financial loss."""
+    result = await db.execute(
+        select(ItemsInventory).where(ItemsInventory.batch_id == request.batch_id)
+    )
+    batch = result.scalar_one_or_none()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    if request.quantity > batch.quantity_current:
+        raise HTTPException(
+            status_code=400,
+            detail="Waste quantity exceeds current batch quantity",
+        )
+
+    # Calculate cost loss proportionally from the batch
+    if batch.quantity_initial > 0:
+        unit_cost = (batch.quantity_initial * 1.0) / batch.quantity_initial
+        # Use source invoice cost if available, otherwise estimate per-unit
+        cost_loss = request.quantity * unit_cost
+    else:
+        cost_loss = 0.0
+
+    batch.quantity_current -= request.quantity
+
+    waste_entry = WasteLog(
+        batch_id=request.batch_id,
+        quantity=request.quantity,
+        reason=request.reason,
+        cost_loss=cost_loss,
+    )
+    db.add(waste_entry)
+    await db.commit()
+    await db.refresh(waste_entry)
+    return waste_entry

@@ -62,10 +62,17 @@ async def create_manual_invoice(
                     days=item.shelf_life_days
                 )
 
+            # If short shipment, record only the actual quantity received
+            # but keep total_cost unchanged (matches bank statement)
+            actual_quantity = line_item.quantity
+            notes = None
+            if line_item.is_short_shipment:
+                notes = "Supplier Credit Needed"
+
             batch = ItemsInventory(
                 item_id=line_item.item_id,
-                quantity_current=line_item.quantity,
-                quantity_initial=line_item.quantity,
+                quantity_current=actual_quantity,
+                quantity_initial=actual_quantity,
                 expiration_date=expiration,
                 source_invoice_id=invoice.invoice_id,
             )
