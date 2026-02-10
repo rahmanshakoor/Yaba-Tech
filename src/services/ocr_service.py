@@ -18,7 +18,7 @@ class OCRResult:
     ):
         self.supplier_name = supplier_name
         self.total_cost = total_cost
-        self.line_items = line_items  # [{"name": str, "quantity": float, "unit": str}]
+        self.line_items = line_items  # [{"name": str, "quantity": float, "unit": str, "unit_cost": float}]
 
 
 class OCRServiceInterface(Protocol):
@@ -67,8 +67,8 @@ class MockOCRService:
             supplier_name="Test Supplier",
             total_cost=150.00,
             line_items=[
-                {"name": "Flour", "quantity": 10.0, "unit": "kg"},
-                {"name": "Sugar", "quantity": 5.0, "unit": "kg"},
+                {"name": "Flour", "quantity": 10.0, "unit": "kg", "unit_cost": 10.0},
+                {"name": "Sugar", "quantity": 5.0, "unit": "kg", "unit_cost": 10.0},
             ],
         )
 
