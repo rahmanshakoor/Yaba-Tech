@@ -3,13 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, FileText } from 'lucide-react';
 import api from '../services/api';
 import { Modal, Button } from '../components/common';
-import InvoiceUploader from '../features/invoices/InvoiceUploader';
 import ManualInvoiceForm from '../features/invoices/ManualInvoiceForm';
 import type { Invoice } from '../types';
 
 export default function InvoicesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addMode, setAddMode] = useState<'choose' | 'ocr' | 'manual'>('choose');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const { data: invoices = [] } = useQuery<Invoice[]>({
@@ -21,13 +19,11 @@ export default function InvoicesPage() {
   });
 
   const openAddModal = () => {
-    setAddMode('choose');
     setShowAddModal(true);
   };
 
   const closeAddModal = () => {
     setShowAddModal(false);
-    setAddMode('choose');
   };
 
   return (
@@ -53,11 +49,10 @@ export default function InvoicesPage() {
                 <button
                   key={inv.invoice_id}
                   onClick={() => setSelectedInvoice(inv)}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    selectedInvoice?.invoice_id === inv.invoice_id
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${selectedInvoice?.invoice_id === inv.invoice_id
                       ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                       : 'hover:bg-gray-50 border border-transparent'
-                  }`}
+                    }`}
                 >
                   <span className="block font-medium">{inv.supplier_name}</span>
                   <span className="text-xs text-gray-400">
@@ -130,43 +125,9 @@ export default function InvoicesPage() {
         onClose={closeAddModal}
         title="Add Invoice"
       >
-        {addMode === 'choose' && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">How would you like to add this invoice?</p>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setAddMode('ocr')}
-                className="border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors"
-              >
-                <span className="block text-lg font-semibold text-gray-800">Auto OCR</span>
-                <span className="text-sm text-gray-500 mt-1 block">Upload an image</span>
-              </button>
-              <button
-                onClick={() => setAddMode('manual')}
-                className="border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors"
-              >
-                <span className="block text-lg font-semibold text-gray-800">Manually</span>
-                <span className="text-sm text-gray-500 mt-1 block">Enter details step by step</span>
-              </button>
-            </div>
-          </div>
-        )}
-        {addMode === 'ocr' && (
-          <div className="space-y-4">
-            <Button variant="secondary" onClick={() => setAddMode('choose')}>
-              ← Back
-            </Button>
-            <InvoiceUploader />
-          </div>
-        )}
-        {addMode === 'manual' && (
-          <div className="space-y-4">
-            <Button variant="secondary" onClick={() => setAddMode('choose')}>
-              ← Back
-            </Button>
-            <ManualInvoiceForm />
-          </div>
-        )}
+        <div className="space-y-4">
+          <ManualInvoiceForm onSuccess={closeAddModal} />
+        </div>
       </Modal>
     </div>
   );

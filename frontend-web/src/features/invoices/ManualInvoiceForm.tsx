@@ -12,7 +12,11 @@ interface LineItem {
 
 import { useItems } from '../../hooks/useInventory';
 
-export default function ManualInvoiceForm() {
+interface ManualInvoiceFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ManualInvoiceForm({ onSuccess }: ManualInvoiceFormProps) {
   const queryClient = useQueryClient();
   const { data: rawItems = [] } = useItems('Raw');
   const [supplier, setSupplier] = useState('');
@@ -47,6 +51,7 @@ export default function ManualInvoiceForm() {
       setSupplier('');
       setDate('');
       setLines([{ item_id: '', quantity: '', unit_cost: '' }]);
+      onSuccess?.();
     },
   });
 
