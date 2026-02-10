@@ -259,10 +259,9 @@ async def produce_item(
             )
         all_usage.extend(usage)
 
-    await session.commit()
-
     # Update average_cost on the output item
     output_item.average_cost = recipe_cost
+
     await session.commit()
 
     return {

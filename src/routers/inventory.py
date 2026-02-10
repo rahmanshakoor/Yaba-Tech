@@ -43,7 +43,7 @@ async def inventory_summary(
         total = sum(b.quantity_current for b in batches)
         if total > 0:
             # Use item's average_cost, or compute recipe cost for composed items
-            if item.average_cost and item.average_cost > 0:
+            if item.average_cost > 0:
                 unit_cost = item.average_cost
             else:
                 unit_cost = await calculate_recipe_cost(db, item.item_id)
