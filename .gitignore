@@ -17,3 +17,4 @@ env/
 .coverage
 htmlcov/
 node_modules/
+frontend-web/dist/
