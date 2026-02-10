@@ -10,6 +10,7 @@ from src.database import get_db
 from src.models import Invoice, Item, ItemType, ItemsInventory
 from src.schemas import InvoiceUploadResponse
 from src.services.ocr_service import OCRServiceInterface, get_ocr_service
+from src.services.cost_service import calculate_moving_average
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -76,10 +77,25 @@ async def upload_invoice(
                     days=item.shelf_life_days
                 )
 
+            # Update moving average cost
+            unit_cost = line_item.get("unit_cost", 0.0)
+            if unit_cost == 0 and line_item["quantity"] > 0:
+                 # Fallback: try to derive from total if this is the only item?
+                 # For now, just leave as 0 if OCR didn't get it.
+                 pass
+
+            await calculate_moving_average(
+                db,
+                item.item_id,
+                line_item["quantity"],
+                unit_cost,
+            )
+
             batch = ItemsInventory(
                 item_id=item.item_id,
                 quantity_current=line_item["quantity"],
                 quantity_initial=line_item["quantity"],
+                unit_cost=unit_cost,
                 expiration_date=expiration,
                 source_invoice_id=invoice.invoice_id,
             )
