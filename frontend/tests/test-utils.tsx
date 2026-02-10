@@ -15,12 +15,13 @@ export function createTestQueryClient() {
 export function renderWithProviders(
   ui: ReactNode,
   options?: Omit<RenderOptions, 'wrapper'>,
+  initialEntries?: string[],
 ) {
   const queryClient = createTestQueryClient();
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
       </QueryClientProvider>
     );
   }

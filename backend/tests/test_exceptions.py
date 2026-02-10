@@ -217,3 +217,93 @@ async def test_revert_blocked_when_output_already_used(db_session):
     )
     used = usage_result.scalar_one_or_none()
     assert used is not None  # Output batch was used, so revert should be blocked
+
+
+@pytest.mark.asyncio
+async def test_waste_exceeds_current_stock(db_session):
+    """Test that wasting more than available does NOT silently succeed.
+
+    The inventory router validates this, so here we verify at the model
+    level that the quantity_current can go negative if unchecked — proving
+    the need for the router-level guard.
+    """
+    item = Item(name="Butter", unit="kg", shelf_life_days=14, type=ItemType.RAW)
+    db_session.add(item)
+    await db_session.flush()
+
+    batch = ItemsInventory(
+        item_id=item.item_id,
+        quantity_current=2.0,
+        quantity_initial=5.0,
+    )
+    db_session.add(batch)
+    await db_session.flush()
+
+    # Attempt to waste more than available (no application guard here)
+    waste_quantity = 5.0
+    batch.quantity_current -= waste_quantity
+
+    waste_entry = WasteLog(
+        batch_id=batch.batch_id,
+        quantity=waste_quantity,
+        reason=WasteReason.DROPPED,
+        cost_loss=waste_quantity * 1.0,
+    )
+    db_session.add(waste_entry)
+    await db_session.commit()
+
+    await db_session.refresh(batch)
+    # Without a router-level check the quantity goes negative
+    assert batch.quantity_current < 0
+
+
+@pytest.mark.asyncio
+async def test_revert_production_full_cycle(db_session):
+    """Test producing and reverting restores exact original quantities."""
+    carrots, water, soup = await _setup_soup_recipe(db_session)
+
+    carrot_batch = ItemsInventory(
+        item_id=carrots.item_id, quantity_current=20.0, quantity_initial=20.0,
+    )
+    water_batch = ItemsInventory(
+        item_id=water.item_id, quantity_current=20.0, quantity_initial=20.0,
+    )
+    db_session.add_all([carrot_batch, water_batch])
+    await db_session.flush()
+
+    # Produce 1 liter of soup
+    result = await produce_item(db_session, soup.item_id, 1.0)
+    output_batch_id = result["output_batch_id"]
+
+    await db_session.refresh(carrot_batch)
+    await db_session.refresh(water_batch)
+    assert carrot_batch.quantity_current == 18.0  # 20 - 2
+    assert water_batch.quantity_current == 19.0  # 20 - 1
+
+    # Revert
+    all_logs_result = await db_session.execute(
+        select(ProductionLog).where(ProductionLog.output_batch_id == output_batch_id)
+    )
+    all_logs = all_logs_result.scalars().all()
+    for log in all_logs:
+        input_batch_result = await db_session.execute(
+            select(ItemsInventory).where(ItemsInventory.batch_id == log.input_batch_id)
+        )
+        ib = input_batch_result.scalar_one_or_none()
+        if ib:
+            ib.quantity_current += log.quantity_used
+
+    output_batch_result = await db_session.execute(
+        select(ItemsInventory).where(ItemsInventory.batch_id == output_batch_id)
+    )
+    ob = output_batch_result.scalar_one_or_none()
+    ob.quantity_current = 0
+
+    for log in all_logs:
+        await db_session.delete(log)
+    await db_session.commit()
+
+    await db_session.refresh(carrot_batch)
+    await db_session.refresh(water_batch)
+    assert carrot_batch.quantity_current == 20.0
+    assert water_batch.quantity_current == 20.0

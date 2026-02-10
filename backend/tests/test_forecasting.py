@@ -129,3 +129,37 @@ async def test_reorder_recommendations(db_session):
     assert len(flour_recs) == 1
     assert flour_recs[0]["current_stock"] == 2.0
     assert flour_recs[0]["gap"] > 0
+
+
+@pytest.mark.asyncio
+async def test_arima_forecast_constant_data():
+    """Test ARIMA forecast with constant input data (no variance)."""
+    usage_data = [5.0] * 10
+    forecast = run_arima_forecast(usage_data, periods=3)
+
+    assert len(forecast) == 3
+    # With constant data, forecast should stay near 5.0
+    for v in forecast:
+        assert abs(v - 5.0) < 1.0
+
+
+@pytest.mark.asyncio
+async def test_arima_forecast_single_data_point():
+    """Test fallback behavior with exactly one data point."""
+    usage_data = [7.0]
+    forecast = run_arima_forecast(usage_data, periods=4)
+
+    assert len(forecast) == 4
+    for v in forecast:
+        assert v == pytest.approx(7.0)
+
+
+@pytest.mark.asyncio
+async def test_get_current_stock_no_batches(db_session):
+    """Test stock calculation when item has no inventory batches."""
+    item = Item(name="EmptyItem", unit="kg", shelf_life_days=30, type=ItemType.RAW)
+    db_session.add(item)
+    await db_session.commit()
+
+    stock = await get_current_stock(db_session, item.item_id)
+    assert stock == 0.0

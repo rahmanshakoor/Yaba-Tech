@@ -35,7 +35,7 @@ class DashboardLog(BaseModel):
     output_batch_id: int
     input_batch_id: int
     quantity_used: float
-    created_at: onclick_datetime
+    created_at: datetime
     output_item_name: str
     input_item_name: str
 
