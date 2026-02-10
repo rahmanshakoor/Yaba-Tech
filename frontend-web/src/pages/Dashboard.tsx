@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { DataTable } from '../components/common';
+import DailyPrepList from '../features/dashboard/DailyPrepList';
+import DemandTrendWidget from '../features/dashboard/DemandTrendWidget';
+import { useDashboardForecast } from '../features/dashboard/hooks/useDashboardForecast';
 
 interface KPICardProps {
   label: string;
@@ -63,6 +66,8 @@ export default function Dashboard() {
     },
   });
 
+  const { data: forecastItems = [] } = useDashboardForecast();
+
   const logColumns = [
     { key: 'log_id', header: 'Log #' },
     { key: 'output_item_name', header: 'Output Item' },
@@ -113,6 +118,15 @@ export default function Dashboard() {
           icon={<Trash2 size={20} className="text-amber-600" />}
           color="bg-amber-50"
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <DailyPrepList items={forecastItems} />
+        </div>
+        <div>
+          <DemandTrendWidget items={forecastItems} />
+        </div>
       </div>
 
       <div>
