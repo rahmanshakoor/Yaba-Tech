@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { Modal, Button, Input, DataTable } from '../components/common';
-import { useItems, useInventorySummary, useLogWaste, useUpdateBatch } from '../hooks/useInventory';
+import { useItems, useLogWaste, useUpdateBatch } from '../hooks/useInventory';
 import type { Item, WasteReason, InventoryBatch } from '../types';
 
 interface BatchRow extends Record<string, unknown> {
@@ -11,8 +11,6 @@ interface BatchRow extends Record<string, unknown> {
   item_type: string;
   quantity_initial: number;
   quantity_current: number;
-  unit_cost: number;
-  total_value: number;
   expiration_date: string | null;
   item_id: number;
 }
@@ -21,7 +19,6 @@ type FilterType = 'All' | 'Raw' | 'Prepped';
 
 export default function InventoryPage() {
   const { data: allItems = [], isLoading: itemsLoading } = useItems();
-  const { data: summaryData } = useInventorySummary();
   const [filter, setFilter] = useState<FilterType>('All');
 
   // Fetch all batches
@@ -48,31 +45,20 @@ export default function InventoryPage() {
     return map;
   }, [allItems]);
 
-  const costMap = useMemo(() => {
-    const map = new Map<number, number>();
-    if (summaryData?.items) {
-      summaryData.items.forEach((s) => map.set(s.item_id, s.unit_cost));
-    }
-    return map;
-  }, [summaryData]);
-
   const rows: BatchRow[] = useMemo(() => {
     return allBatches.map((b) => {
       const item = itemMap.get(b.item_id);
-      const unitCost = costMap.get(b.item_id) ?? 0;
       return {
         batch_id: b.batch_id,
         item_name: item?.name ?? `Item #${b.item_id}`,
         item_type: item?.type ?? 'Raw',
         quantity_initial: b.quantity_initial,
         quantity_current: b.quantity_current,
-        unit_cost: unitCost,
-        total_value: b.quantity_current * unitCost,
         expiration_date: b.expiration_date,
         item_id: b.item_id,
       };
     });
-  }, [allBatches, itemMap, costMap]);
+  }, [allBatches, itemMap]);
 
   const filteredRows = useMemo(() => {
     if (filter === 'All') return rows;
@@ -119,20 +105,6 @@ export default function InventoryPage() {
       key: 'quantity_current',
       header: 'Current Qty',
       render: (row: BatchRow) => <span className="font-mono">{row.quantity_current}</span>,
-    },
-    {
-      key: 'unit_cost',
-      header: 'Unit Cost',
-      render: (row: BatchRow) => (
-        <span className="font-mono">${row.unit_cost.toFixed(2)}</span>
-      ),
-    },
-    {
-      key: 'total_value',
-      header: 'Total Value',
-      render: (row: BatchRow) => (
-        <span className="font-mono">${row.total_value.toFixed(2)}</span>
-      ),
     },
     {
       key: 'expiration_date',
@@ -189,14 +161,6 @@ export default function InventoryPage() {
       </div>
 
       <DataTable columns={columns} data={filteredRows} keyField="batch_id" />
-
-      {/* Total Inventory Value */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">Total Inventory Value</span>
-        <span className="text-lg font-bold text-indigo-600">
-          ${(summaryData?.total_inventory_value ?? 0).toFixed(2)}
-        </span>
-      </div>
 
       {/* Edit Batch Modal */}
       <Modal

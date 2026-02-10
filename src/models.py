@@ -40,7 +40,6 @@ class Item(Base):
     shelf_life_days = Column(Integer, nullable=False, default=0)
     type = Column(Enum(ItemType), nullable=False)
     is_archived = Column(Boolean, default=False, nullable=False)
-    average_cost = Column(Float, nullable=False, default=0.0)
 
     # Relationships
     compositions_as_output = relationship(
