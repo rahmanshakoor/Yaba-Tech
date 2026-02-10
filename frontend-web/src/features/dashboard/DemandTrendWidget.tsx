@@ -36,8 +36,8 @@ export default function DemandTrendWidget({ items }: DemandTrendWidgetProps) {
                 </p>
                 <p className="text-xs text-gray-500">{item.type}</p>
               </div>
-              <div className="flex items-center gap-1.5 text-green-600">
-                <TrendingUp size={14} />
+              <div className="flex items-center gap-1.5 text-gray-700">
+                <TrendingUp size={14} className="text-gray-400" />
                 <span className="text-sm font-semibold">
                   {item.predicted_demand} {item.unit}
                 </span>
