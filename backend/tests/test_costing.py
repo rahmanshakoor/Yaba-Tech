@@ -141,3 +141,40 @@ async def test_nested_recipe_cost(db_session):
     # Cake cost = 2 * 3.5 = 7.0
     cake_cost = await calculate_recipe_cost(db_session, cake.item_id)
     assert cake_cost == pytest.approx(7.0)
+
+
+@pytest.mark.asyncio
+async def test_circular_recipe_returns_zero(db_session):
+    """Test that a circular recipe does not cause infinite recursion."""
+    a = Item(name="ItemA", unit="kg", shelf_life_days=1, type=ItemType.PREPPED)
+    b = Item(name="ItemB", unit="kg", shelf_life_days=1, type=ItemType.PREPPED)
+    db_session.add_all([a, b])
+    await db_session.flush()
+
+    # A uses B, B uses A → circular
+    db_session.add_all([
+        ItemComposition(output_item_id=a.item_id, input_item_id=b.item_id, quantity_required=1.0),
+        ItemComposition(output_item_id=b.item_id, input_item_id=a.item_id, quantity_required=1.0),
+    ])
+    await db_session.commit()
+
+    cost = await calculate_recipe_cost(db_session, a.item_id)
+    assert cost == pytest.approx(0.0)
+
+
+@pytest.mark.asyncio
+async def test_recipe_cost_raw_item_no_average(db_session):
+    """Test cost of a raw item with no average_cost set (defaults to 0)."""
+    raw = Item(name="Water", unit="liter", shelf_life_days=0, type=ItemType.RAW)
+    db_session.add(raw)
+    await db_session.commit()
+
+    cost = await calculate_recipe_cost(db_session, raw.item_id)
+    assert cost == pytest.approx(0.0)
+
+
+@pytest.mark.asyncio
+async def test_recipe_cost_nonexistent_item(db_session):
+    """Test cost calculation for an item that does not exist."""
+    cost = await calculate_recipe_cost(db_session, 99999)
+    assert cost == pytest.approx(0.0)
