@@ -10,7 +10,6 @@ from sqlalchemy.orm import selectinload
 from src.database import get_db
 from src.models import Invoice, Item, ItemsInventory, ProductionLog
 from src.schemas import InvoiceResponse, ManualInvoiceCreate
-from src.services.cost_service import calculate_moving_average
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -70,14 +69,6 @@ async def create_manual_invoice(
                 # In a production system, a "Supplier Credit Needed" note
                 # would be persisted to a notes/flags table for follow-up.
                 pass
-
-            # Update moving average cost for raw items (before adding the batch)
-            await calculate_moving_average(
-                db,
-                line_item.item_id,
-                actual_quantity,
-                line_item.unit_cost,
-            )
 
             batch = ItemsInventory(
                 item_id=line_item.item_id,
