@@ -1,20 +1,29 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { Input } from '../../components/common';
 import { useDebounce } from '../../hooks/useDebounce';
-import type { Item, Recipe } from '../../types';
+import type { Item, ItemType, Recipe } from '../../types';
+
+interface SelectedIngredient {
+  input_item_id: number;
+  name: string;
+  unit: string;
+  quantity: number;
+}
 
 interface RecipeBuilderProps {
   dish: Item;
   allItems: Item[];
+  targetItemType: ItemType;
 }
 
-export default function RecipeBuilder({ dish, allItems }: RecipeBuilderProps) {
+export default function RecipeBuilder({ dish, allItems, targetItemType }: RecipeBuilderProps) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search);
+  const [ingredients, setIngredients] = useState<SelectedIngredient[]>([]);
   const [addQuantity, setAddQuantity] = useState<Record<number, string>>({});
 
   const { data: recipe } = useQuery<Recipe>({
@@ -25,35 +34,56 @@ export default function RecipeBuilder({ dish, allItems }: RecipeBuilderProps) {
     },
   });
 
-  const addIngredient = useMutation({
-    mutationFn: async ({
-      inputItemId,
-      quantity,
-    }: {
-      inputItemId: number;
-      quantity: number;
-    }) => {
-      await api.post(`/items/${dish.item_id}/recipe`, {
-        input_item_id: inputItemId,
-        quantity_required: quantity,
-      });
+  const saveComposition = useMutation({
+    mutationFn: async (payload: { input_item_id: number; quantity: number }[]) => {
+      await api.post(`/items/${dish.item_id}/composition`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipe', dish.item_id] });
+      setIngredients([]);
     },
   });
 
-  const availableItems = allItems.filter(
-    (item) =>
-      item.item_id !== dish.item_id &&
-      item.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
-  );
+  // Filter available items based on targetItemType
+  const availableItems = allItems.filter((item) => {
+    if (item.item_id === dish.item_id) return false;
+    if (!item.name.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
 
-  const handleAdd = (itemId: number) => {
-    const qty = Number(addQuantity[itemId] || 1);
+    if (targetItemType === 'Prepped') {
+      return item.type === 'Raw';
+    }
+    if (targetItemType === 'Dish') {
+      return item.type === 'Raw' || item.type === 'Prepped';
+    }
+    return false;
+  });
+
+  const handleAdd = (item: Item) => {
+    const qty = Number(addQuantity[item.item_id] || 1);
     if (qty <= 0) return;
-    addIngredient.mutate({ inputItemId: itemId, quantity: qty });
-    setAddQuantity((prev) => ({ ...prev, [itemId]: '' }));
+
+    // Avoid duplicates
+    if (ingredients.some((ing) => ing.input_item_id === item.item_id)) return;
+
+    setIngredients((prev) => [
+      ...prev,
+      { input_item_id: item.item_id, name: item.name, unit: item.unit, quantity: qty },
+    ]);
+    setAddQuantity((prev) => ({ ...prev, [item.item_id]: '' }));
+  };
+
+  const handleRemove = (inputItemId: number) => {
+    setIngredients((prev) => prev.filter((ing) => ing.input_item_id !== inputItemId));
+  };
+
+  const handleSave = () => {
+    if (ingredients.length === 0) return;
+    saveComposition.mutate(
+      ingredients.map((ing) => ({
+        input_item_id: ing.input_item_id,
+        quantity: ing.quantity,
+      })),
+    );
   };
 
   return (
@@ -94,7 +124,7 @@ export default function RecipeBuilder({ dish, allItems }: RecipeBuilderProps) {
                 }
               />
               <button
-                onClick={() => handleAdd(item.item_id)}
+                onClick={() => handleAdd(item)}
                 className="p-1 rounded hover:bg-indigo-50 text-indigo-600"
                 title="Add to recipe"
               >
@@ -105,11 +135,54 @@ export default function RecipeBuilder({ dish, allItems }: RecipeBuilderProps) {
         </div>
       </div>
 
-      {/* Right: Current recipe */}
+      {/* Right: Current recipe + staged ingredients */}
       <div>
         <h3 className="text-sm font-semibold text-gray-700 mb-3">
           Recipe for {dish.name}
         </h3>
+
+        {/* Staged ingredients (pending save) */}
+        {ingredients.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-500 mb-2">
+              Pending Ingredients
+            </h4>
+            <div className="border border-indigo-200 rounded-lg divide-y divide-indigo-100 bg-indigo-50">
+              {ingredients.map((ing) => (
+                <div
+                  key={ing.input_item_id}
+                  className="flex items-center justify-between px-4 py-3 text-sm"
+                >
+                  <span>
+                    {ing.name}{' '}
+                    <span className="text-gray-400">({ing.unit})</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-gray-600">
+                      {ing.quantity}
+                    </span>
+                    <button
+                      onClick={() => handleRemove(ing.input_item_id)}
+                      className="p-1 rounded hover:bg-red-50 text-red-500"
+                      title="Remove ingredient"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={saveComposition.isPending}
+              className="mt-3 w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {saveComposition.isPending ? 'Saving...' : 'Save Composition'}
+            </button>
+          </div>
+        )}
+
+        {/* Saved recipe */}
         <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
           {!recipe?.ingredients?.length ? (
             <p className="px-4 py-6 text-sm text-gray-400 text-center">

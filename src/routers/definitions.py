@@ -10,6 +10,8 @@ from sqlalchemy.orm import selectinload
 from src.database import get_db
 from src.models import Item, ItemComposition, ItemType
 from src.schemas import (
+    CompositionIngredient,
+    CompositionResponse,
     ItemCreate,
     ItemResponse,
     ItemUpdate,
@@ -17,6 +19,7 @@ from src.schemas import (
     RecipeIngredientResponse,
     RecipeResponse,
 )
+from src.services.recipe_service import save_composition
 
 router = APIRouter(prefix="/items", tags=["definitions"])
 
@@ -181,4 +184,49 @@ async def get_recipe(
         output_item_id=item.item_id,
         output_item_name=item.name,
         ingredients=ingredients,
+    )
+
+
+@router.post("/{item_id}/composition", response_model=CompositionResponse, status_code=200)
+async def set_item_composition(
+    item_id: int,
+    ingredients: list[CompositionIngredient],
+    db: AsyncSession = Depends(get_db),
+):
+    """Set the full composition for a Prepped or Dish item.
+
+    Replaces any existing composition rows for this item.
+    Validates ingredient types based on target item type:
+    - Prepped items: only Raw ingredients allowed.
+    - Dish items: Raw and Prepped ingredients allowed.
+    """
+    try:
+        compositions = await save_composition(
+            db,
+            item_id,
+            [ing.model_dump() for ing in ingredients],
+        )
+        await db.commit()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Reload compositions with input item names
+    comp_result = await db.execute(
+        select(ItemComposition)
+        .where(ItemComposition.output_item_id == item_id)
+        .options(selectinload(ItemComposition.input_item))
+    )
+    saved = comp_result.scalars().all()
+
+    return CompositionResponse(
+        output_item_id=item_id,
+        compositions=[
+            RecipeIngredientResponse(
+                composition_id=c.composition_id,
+                input_item_id=c.input_item_id,
+                input_item_name=c.input_item.name,
+                quantity_required=c.quantity_required,
+            )
+            for c in saved
+        ],
     )

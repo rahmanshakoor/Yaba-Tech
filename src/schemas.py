@@ -56,6 +56,16 @@ class ItemCompositionCreate(BaseModel):
     quantity_required: float
 
 
+class CompositionIngredient(BaseModel):
+    input_item_id: int
+    quantity: float
+
+
+class CompositionResponse(BaseModel):
+    output_item_id: int
+    compositions: list[RecipeIngredientResponse]
+
+
 class ManualInvoiceLineItem(BaseModel):
     item_id: int
     quantity: float
