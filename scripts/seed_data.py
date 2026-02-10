@@ -159,7 +159,7 @@ async def create_initial_invoices(
         "00 Flour": 300.0,       # Kg
         "San Marzano Tomatoes": 500.0,  # Cans
         "Mozzarella Cheese": 150.0,     # Kg
-        "Fresh Basil": 1500.0,   # Bunches
+        "Fresh Basil": 1200.0,   # Bunches
     }
 
     invoice = Invoice(
@@ -246,7 +246,7 @@ async def simulate_daily_production(
         item_id=items["Pizza Dough"].item_id,
         quantity_initial=float(pizza_count),
         quantity_current=0.0,  # fully consumed immediately
-        unit_cost=items.get("Pizza Dough", items["00 Flour"]).average_cost,
+        unit_cost=batches["00 Flour"][0].unit_cost * flour_per_pizza,
         expiration_date=day_date + timedelta(days=3),
         created_at=day_date,
     )
@@ -254,7 +254,7 @@ async def simulate_daily_production(
         item_id=items["Pizza Sauce"].item_id,
         quantity_initial=pizza_count * 0.1,
         quantity_current=0.0,
-        unit_cost=0.0,
+        unit_cost=batches["San Marzano Tomatoes"][0].unit_cost * tomato_per_pizza,
         expiration_date=day_date + timedelta(days=5),
         created_at=day_date,
     )
