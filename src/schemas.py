@@ -128,10 +128,13 @@ class InventorySummaryItem(BaseModel):
     item_name: str
     unit: str
     total_stock: float
+    unit_cost: float = 0.0
+    total_value: float = 0.0
 
 
 class InventorySummaryResponse(BaseModel):
     items: list[InventorySummaryItem]
+    total_inventory_value: float = 0.0
 
 
 class BatchUpdateRequest(BaseModel):

@@ -11,6 +11,7 @@ from src.models import (
     ItemsInventory,
     ProductionLog,
 )
+from src.services.cost_service import calculate_recipe_cost
 
 
 async def get_item_stock(session: AsyncSession, item_id: int) -> float:
@@ -228,10 +229,14 @@ async def produce_item(
             days=output_item.shelf_life_days
         )
 
+    # Calculate the recipe cost for this production batch
+    recipe_cost = await calculate_recipe_cost(session, output_item_id)
+
     output_batch = ItemsInventory(
         item_id=output_item_id,
         quantity_current=quantity_to_produce,
         quantity_initial=quantity_to_produce,
+        unit_cost=recipe_cost,
         expiration_date=expiration,
     )
     session.add(output_batch)
@@ -253,6 +258,9 @@ async def produce_item(
                 session, input_item_id, qty_needed, output_batch
             )
         all_usage.extend(usage)
+
+    # Update average_cost on the output item
+    output_item.average_cost = recipe_cost
 
     await session.commit()
 
