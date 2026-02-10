@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { Input } from '../../components/common';
 import { useDebounce } from '../../hooks/useDebounce';
-import { useInventorySummary } from '../../hooks/useInventory';
 import type { Item, ItemType, Recipe } from '../../types';
 
 interface SelectedIngredient {
@@ -26,15 +25,6 @@ export default function RecipeBuilder({ dish, allItems, targetItemType }: Recipe
   const debouncedSearch = useDebounce(search);
   const [ingredients, setIngredients] = useState<SelectedIngredient[]>([]);
   const [addQuantity, setAddQuantity] = useState<Record<number, string>>({});
-  const { data: summaryData } = useInventorySummary();
-
-  const costMap = useMemo(() => {
-    const map = new Map<number, number>();
-    if (summaryData?.items) {
-      summaryData.items.forEach((s) => map.set(s.item_id, s.unit_cost));
-    }
-    return map;
-  }, [summaryData]);
 
   const { data: recipe } = useQuery<Recipe>({
     queryKey: ['recipe', dish.item_id],
@@ -95,23 +85,6 @@ export default function RecipeBuilder({ dish, allItems, targetItemType }: Recipe
       })),
     );
   };
-
-  // Estimated cost for pending ingredients
-  const pendingEstimatedCost = useMemo(() => {
-    return ingredients.reduce((sum, ing) => {
-      const ingCost = costMap.get(ing.input_item_id) ?? 0;
-      return sum + ing.quantity * ingCost;
-    }, 0);
-  }, [ingredients, costMap]);
-
-  // Estimated cost for saved recipe
-  const savedRecipeCost = useMemo(() => {
-    if (!recipe?.ingredients?.length) return 0;
-    return recipe.ingredients.reduce((sum, ing) => {
-      const ingCost = costMap.get(ing.input_item_id) ?? 0;
-      return sum + ing.quantity_required * ingCost;
-    }, 0);
-  }, [recipe, costMap]);
 
   return (
     <div className="grid grid-cols-2 gap-6">
@@ -206,11 +179,6 @@ export default function RecipeBuilder({ dish, allItems, targetItemType }: Recipe
             >
               {saveComposition.isPending ? 'Saving...' : 'Save Composition'}
             </button>
-            {pendingEstimatedCost > 0 && (
-              <div className="mt-2 text-sm text-indigo-700 font-medium text-right">
-                Estimated Cost: ${pendingEstimatedCost.toFixed(2)}
-              </div>
-            )}
           </div>
         )}
 
@@ -227,23 +195,13 @@ export default function RecipeBuilder({ dish, allItems, targetItemType }: Recipe
                 className="flex items-center justify-between px-4 py-3 text-sm"
               >
                 <span>{ing.input_item_name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-gray-600">
-                    {ing.quantity_required}
-                  </span>
-                  <span className="font-mono text-gray-400 text-xs">
-                    ${((costMap.get(ing.input_item_id) ?? 0) * ing.quantity_required).toFixed(2)}
-                  </span>
-                </div>
+                <span className="font-mono text-gray-600">
+                  {ing.quantity_required}
+                </span>
               </div>
             ))
           )}
         </div>
-        {savedRecipeCost > 0 && (
-          <div className="mt-2 text-sm text-gray-700 font-medium text-right">
-            Recipe Cost: ${savedRecipeCost.toFixed(2)}
-          </div>
-        )}
       </div>
     </div>
   );
