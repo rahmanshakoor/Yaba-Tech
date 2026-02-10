@@ -94,6 +94,8 @@ class InvoiceResponse(BaseModel):
 class ProductionRequest(BaseModel):
     output_item_id: int
     quantity_to_produce: float
+    manual_batches: Optional[dict[int, int]] = None  # input_item_id -> batch_id
+
 
 
 class ProductionResponse(BaseModel):

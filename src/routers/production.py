@@ -23,6 +23,7 @@ async def record_production(
             db,
             output_item_id=request.output_item_id,
             quantity_to_produce=request.quantity_to_produce,
+            manual_batches=request.manual_batches,
         )
         return ProductionResponse(**result)
     except ValueError as e:

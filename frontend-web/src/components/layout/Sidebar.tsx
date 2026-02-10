@@ -12,7 +12,7 @@ const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/definitions', label: 'Definitions', icon: BookOpen },
   { to: '/inventory', label: 'Inventory', icon: Package },
-  { to: '/recipes', label: 'Recipes', icon: ChefHat },
+  //  { to: '/recipes', label: 'Recipes', icon: ChefHat },
   { to: '/production', label: 'Production', icon: Factory },
   { to: '/invoices', label: 'Invoices', icon: FileText },
 ];
@@ -32,10 +32,9 @@ export default function Sidebar() {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-indigo-600 text-white'
-                  : 'hover:bg-gray-800 hover:text-white'
+              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${isActive
+                ? 'bg-indigo-600 text-white'
+                : 'hover:bg-gray-800 hover:text-white'
               }`
             }
           >

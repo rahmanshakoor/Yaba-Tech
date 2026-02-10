@@ -76,3 +76,9 @@ export interface ProductionResponse {
   quantity_produced: number;
   ingredients_used: Record<string, unknown>[];
 }
+
+export interface StockCheckResponse {
+  available: boolean;
+  detail?: string;
+  max_producible?: number;
+}

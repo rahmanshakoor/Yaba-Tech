@@ -150,11 +150,10 @@ export default function InventoryPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              filter === f
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === f
                 ? 'bg-indigo-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
+              }`}
           >
             {f}
           </button>

@@ -10,8 +10,11 @@ interface LineItem {
   unit_cost: string;
 }
 
+import { useItems } from '../../hooks/useInventory';
+
 export default function ManualInvoiceForm() {
   const queryClient = useQueryClient();
+  const { data: rawItems = [] } = useItems('Raw');
   const [supplier, setSupplier] = useState('');
   const [date, setDate] = useState('');
   const [lines, setLines] = useState<LineItem[]>([
@@ -106,15 +109,20 @@ export default function ManualInvoiceForm() {
               {lines.map((line, idx) => (
                 <tr key={idx}>
                   <td className="px-3 py-2">
-                    <input
-                      type="number"
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                    <select
+                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white"
                       value={line.item_id}
                       onChange={(e) =>
                         updateLine(idx, 'item_id', e.target.value)
                       }
-                      placeholder="ID"
-                    />
+                    >
+                      <option value="">Select Item</option>
+                      {rawItems.map((item) => (
+                        <option key={item.item_id} value={item.item_id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-3 py-2">
                     <input
@@ -125,7 +133,11 @@ export default function ManualInvoiceForm() {
                       onChange={(e) =>
                         updateLine(idx, 'quantity', e.target.value)
                       }
-                      placeholder="Qty"
+                      placeholder={
+                        line.item_id && rawItems.find(i => i.item_id === Number(line.item_id))
+                          ? rawItems.find(i => i.item_id === Number(line.item_id))?.unit
+                          : 'Qty'
+                      }
                     />
                   </td>
                   <td className="px-3 py-2">

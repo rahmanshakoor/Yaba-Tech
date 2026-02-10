@@ -90,6 +90,7 @@ class ItemsInventory(Base):
     item_id = Column(Integer, ForeignKey("items.item_id"), nullable=False)
     quantity_current = Column(Float, nullable=False)
     quantity_initial = Column(Float, nullable=False)
+    unit_cost = Column(Float, nullable=False, default=0.0)
     expiration_date = Column(DateTime, nullable=True)
     source_invoice_id = Column(
         Integer, ForeignKey("invoices.invoice_id"), nullable=True

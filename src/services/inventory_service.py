@@ -44,6 +44,7 @@ async def check_ingredients_available(
     session: AsyncSession,
     output_item_id: int,
     quantity_to_produce: float,
+    manual_batches: dict[int, int] | None = None,
 ) -> dict[int, float]:
     """Check if all ingredients are available for production.
 
@@ -69,18 +70,44 @@ async def check_ingredients_available(
     requirements: dict[int, float] = {}
     for comp in compositions:
         needed = comp.quantity_required * quantity_to_produce
-        stock = await get_item_stock(session, comp.input_item_id)
-        if stock < needed:
-            # Get item name for better error message
-            item_result = await session.execute(
-                select(Item).where(Item.item_id == comp.input_item_id)
+        # If manual batch is specified for this ingredient, verify it content
+        if manual_batches and comp.input_item_id in manual_batches:
+            batch_id = manual_batches[comp.input_item_id]
+            batch_result = await session.execute(
+                select(ItemsInventory).where(
+                    ItemsInventory.batch_id == batch_id,
+                    ItemsInventory.item_id == comp.input_item_id,
+                )
             )
-            item = item_result.scalar_one_or_none()
-            item_name = item.name if item else f"item_id={comp.input_item_id}"
-            raise ValueError(
-                f"Insufficient stock for '{item_name}': "
-                f"need {needed}, have {stock}"
-            )
+            batch = batch_result.scalar_one_or_none()
+            
+            if not batch:
+                raise ValueError(f"Selected batch {batch_id} not found for item {comp.input_item_id}")
+            
+            if batch.quantity_current < needed:
+                 max_possible = int(batch.quantity_current / comp.quantity_required)
+                 raise ValueError(
+                    f"Batch {batch_id} has insufficient quantity ({batch.quantity_current}). "
+                    f"Max possible to produce: {max_possible}"
+                )
+        else:
+            stock = await get_item_stock(session, comp.input_item_id)
+            if stock < needed:
+                # Calculate max possible for this ingredient
+                max_possible = int(stock / comp.quantity_required)
+                
+                # Get item name for better error message
+                item_result = await session.execute(
+                    select(Item).where(Item.item_id == comp.input_item_id)
+                )
+                item = item_result.scalar_one_or_none()
+                item_name = item.name if item else f"item_id={comp.input_item_id}"
+                
+                raise ValueError(
+                    f"Insufficient stock for '{item_name}': "
+                    f"need {needed}, have {stock}. "
+                    f"Max possible to produce: {max_possible}"
+                )
         requirements[comp.input_item_id] = needed
 
     return requirements
@@ -128,10 +155,50 @@ async def deduct_fifo(
     return usage_log
 
 
+async def deduct_manual(
+    session: AsyncSession,
+    item_id: int,
+    quantity_needed: float,
+    batch_id: int,
+    output_batch: ItemsInventory,
+) -> list[dict]:
+    """Deduct quantity from a specific batch."""
+    result = await session.execute(
+        select(ItemsInventory).where(ItemsInventory.batch_id == batch_id)
+    )
+    batch = result.scalar_one_or_none()
+    
+    if not batch:
+        raise ValueError(f"Batch {batch_id} not found")
+        
+    # We already validated quantity in check_ingredients_available, but safe to check again or just do it
+    if batch.quantity_current < quantity_needed:
+         raise ValueError(f"Batch {batch_id} insufficient stock")
+
+    batch.quantity_current -= quantity_needed
+    
+    # Create production log entry
+    log_entry = ProductionLog(
+        output_batch_id=output_batch.batch_id,
+        input_batch_id=batch.batch_id,
+        quantity_used=quantity_needed,
+    )
+    session.add(log_entry)
+
+    return [
+        {
+            "input_batch_id": batch.batch_id,
+            "item_id": item_id,
+            "quantity_used": quantity_needed,
+        }
+    ]
+
+
 async def produce_item(
     session: AsyncSession,
     output_item_id: int,
     quantity_to_produce: float,
+    manual_batches: dict[int, int] | None = None,
 ) -> dict:
     """Execute a production run: validate, deduct ingredients, create output batch.
 
@@ -143,7 +210,7 @@ async def produce_item(
     """
     # 1. Validate ingredients
     requirements = await check_ingredients_available(
-        session, output_item_id, quantity_to_produce
+        session, output_item_id, quantity_to_produce, manual_batches
     )
 
     # 2. Get the output item for shelf life calculation
@@ -173,9 +240,18 @@ async def produce_item(
     # 4. Deduct ingredients using FIFO
     all_usage: list[dict] = []
     for input_item_id, qty_needed in requirements.items():
-        usage = await deduct_fifo(
-            session, input_item_id, qty_needed, output_batch
-        )
+        if manual_batches and input_item_id in manual_batches:
+             usage = await deduct_manual(
+                session, 
+                input_item_id, 
+                qty_needed, 
+                manual_batches[input_item_id],
+                output_batch
+            )
+        else:
+            usage = await deduct_fifo(
+                session, input_item_id, qty_needed, output_batch
+            )
         all_usage.extend(usage)
 
     await session.commit()

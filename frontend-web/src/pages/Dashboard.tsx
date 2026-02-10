@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { DataTable } from '../components/common';
-import type { DashboardKPIs, ProductionLog } from '../types';
 
 interface KPICardProps {
   label: string;
@@ -30,70 +29,55 @@ function KPICard({ label, value, icon, color }: KPICardProps) {
   );
 }
 
-interface LogRow extends Record<string, unknown> {
+interface DashboardStats {
+  lowStockItems: number;
+  todaysProductionCost: number;
+  pendingInvoices: number;
+  wasteValueWeek: number;
+}
+
+interface DashboardLog extends Record<string, unknown> {
   log_id: number;
   output_batch_id: number;
   input_batch_id: number;
   quantity_used: number;
   created_at: string;
+  output_item_name: string;
+  input_item_name: string;
 }
 
 export default function Dashboard() {
-  const { data: kpis } = useQuery<DashboardKPIs>({
-    queryKey: ['dashboardKPIs'],
+  const { data: stats } = useQuery<DashboardStats>({
+    queryKey: ['dashboardStats'],
     queryFn: async () => {
-      // Aggregate from available endpoints
-      const [summaryRes, invoicesRes] = await Promise.all([
-        api.get('/inventory/summary'),
-        api.get('/invoices/'),
-      ]);
-
-      const items = summaryRes.data.items || [];
-      const lowStock = items.filter(
-        (i: { total_stock: number }) => i.total_stock < 5,
-      ).length;
-
-      return {
-        lowStockItems: lowStock,
-        todaysProductionCost: 0,
-        pendingInvoices: (invoicesRes.data || []).length,
-        wasteValueWeek: 0,
-      };
+      const response = await api.get('/dashboard/stats');
+      return response.data;
     },
   });
 
-  const { data: recentLogs = [] } = useQuery<ProductionLog[]>({
+  const { data: recentLogs = [] } = useQuery<DashboardLog[]>({
     queryKey: ['recentLogs'],
     queryFn: async () => {
-      // The backend doesn't have a dedicated recent logs endpoint,
-      // so we return an empty array as a placeholder.
-      return [];
+      const response = await api.get('/dashboard/recent-logs');
+      return response.data;
     },
   });
-
-  const logRows: LogRow[] = recentLogs.slice(0, 5).map((l) => ({
-    log_id: l.log_id,
-    output_batch_id: l.output_batch_id,
-    input_batch_id: l.input_batch_id,
-    quantity_used: l.quantity_used,
-    created_at: l.created_at,
-  }));
 
   const logColumns = [
     { key: 'log_id', header: 'Log #' },
-    { key: 'output_batch_id', header: 'Output Batch' },
-    { key: 'input_batch_id', header: 'Input Batch' },
+    { key: 'output_item_name', header: 'Output Item' },
+    { key: 'input_item_name', header: 'Input Item' },
     {
       key: 'quantity_used',
       header: 'Qty Used',
-      render: (row: LogRow) => (
+      render: (row: DashboardLog) => (
         <span className="font-mono">{row.quantity_used}</span>
       ),
     },
     {
       key: 'created_at',
       header: 'Time',
-      render: (row: LogRow) =>
+      render: (row: DashboardLog) =>
         row.created_at
           ? new Date(String(row.created_at)).toLocaleString()
           : '—',
@@ -107,25 +91,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-4 gap-4">
         <KPICard
           label="Low Stock Items"
-          value={String(kpis?.lowStockItems ?? '—')}
+          value={String(stats?.lowStockItems ?? '—')}
           icon={<AlertTriangle size={20} className="text-red-600" />}
           color="bg-red-50"
         />
         <KPICard
           label="Today's Production Cost"
-          value={`$${(kpis?.todaysProductionCost ?? 0).toFixed(2)}`}
+          value={`$${(stats?.todaysProductionCost ?? 0).toFixed(2)}`}
           icon={<DollarSign size={20} className="text-green-600" />}
           color="bg-green-50"
         />
         <KPICard
           label="Pending Invoices"
-          value={String(kpis?.pendingInvoices ?? '—')}
+          value={String(stats?.pendingInvoices ?? '—')}
           icon={<FileText size={20} className="text-blue-600" />}
           color="bg-blue-50"
         />
         <KPICard
           label="Waste Value (Week)"
-          value={`$${(kpis?.wasteValueWeek ?? 0).toFixed(2)}`}
+          value={`$${(stats?.wasteValueWeek ?? 0).toFixed(2)}`}
           icon={<Trash2 size={20} className="text-amber-600" />}
           color="bg-amber-50"
         />
@@ -135,7 +119,7 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
           Recent Production Activity
         </h2>
-        <DataTable columns={logColumns} data={logRows} keyField="log_id" />
+        <DataTable columns={logColumns} data={recentLogs} keyField="log_id" />
       </div>
     </div>
   );

@@ -74,6 +74,7 @@ async def create_manual_invoice(
                 item_id=line_item.item_id,
                 quantity_current=actual_quantity,
                 quantity_initial=actual_quantity,
+                unit_cost=line_item.unit_cost,
                 expiration_date=expiration,
                 source_invoice_id=invoice.invoice_id,
             )

@@ -4,7 +4,8 @@ import { AlertTriangle, ChefHat, CheckCircle } from 'lucide-react';
 import api from '../services/api';
 import { useItems } from '../hooks/useInventory';
 import { Button } from '../components/common';
-import type { Item, Recipe, ProductionResponse } from '../types';
+import IngredientBatchSelector from '../components/common/IngredientBatchSelector';
+import type { Item, Recipe, ProductionResponse, StockCheckResponse } from '../types';
 
 export default function ProductionPage() {
   const queryClient = useQueryClient();
@@ -17,6 +18,16 @@ export default function ProductionPage() {
   const [stockOk, setStockOk] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [manualBatches, setManualBatches] = useState(false);
+  const [selectedBatches, setSelectedBatches] = useState<Record<number, number | null>>({});
+
+  // Reset selected batches when item changes or toggle changes
+  const handleItemChange = (itemId: number | '') => {
+    setSelectedItem(itemId);
+    setStockMessage(null);
+    setStockOk(false);
+    setValidationError(null);
+    setSelectedBatches({});
+  };
 
   // Fetch recipe for selected item
   const { data: recipe } = useQuery<Recipe>({
@@ -28,17 +39,17 @@ export default function ProductionPage() {
     enabled: selectedItem !== '',
   });
 
-  const checkStock = useMutation({
+  const checkStock = useMutation<StockCheckResponse, Error>({
     mutationFn: async () => {
-      const { data } = await api.get(`/items/${selectedItem}/recipe`);
-      return data as Recipe;
+      const { data } = await api.get(`/inventory/check-stock/${selectedItem}`);
+      return data;
     },
     onSuccess: (data) => {
-      if (data.ingredients?.length > 0) {
-        setStockMessage('Stock check passed – ingredients available.');
+      if (data.available) {
+        setStockMessage(`Stock check passed. Max producible: ${data.max_producible}`);
         setStockOk(true);
       } else {
-        setStockMessage('No recipe defined for this item.');
+        setStockMessage(`${data.detail} (Max possible: ${data.max_producible || 0})`);
         setStockOk(false);
       }
     },
@@ -53,6 +64,13 @@ export default function ProductionPage() {
       const { data } = await api.post('/production/record', {
         output_item_id: Number(selectedItem),
         quantity_to_produce: Number(quantity),
+        manual_batches: manualBatches ?
+          Object.fromEntries(
+            Object.entries(selectedBatches)
+              .filter(([_, v]) => v !== null)
+              .map(([k, v]) => [Number(k), Number(v)])
+          )
+          : undefined,
       });
       return data;
     },
@@ -65,6 +83,7 @@ export default function ProductionPage() {
       setStockMessage(null);
       setStockOk(false);
       setValidationError(null);
+      setSelectedBatches({});
     },
   });
 
@@ -102,10 +121,7 @@ export default function ProductionPage() {
             className="block w-full rounded-md bg-gray-800 border border-gray-600 text-white px-4 py-3 text-base"
             value={selectedItem}
             onChange={(e) => {
-              setSelectedItem(e.target.value === '' ? '' : Number(e.target.value));
-              setStockMessage(null);
-              setStockOk(false);
-              setValidationError(null);
+              handleItemChange(e.target.value === '' ? '' : Number(e.target.value));
             }}
           >
             <option value="">Choose a dish or prepped component...</option>
@@ -145,11 +161,10 @@ export default function ProductionPage() {
         {/* Stock Message */}
         {stockMessage && (
           <div
-            className={`flex items-center gap-2 rounded-md px-4 py-3 text-sm ${
-              stockOk
-                ? 'bg-green-900/50 border border-green-700 text-green-300'
-                : 'bg-yellow-900/50 border border-yellow-700 text-yellow-300'
-            }`}
+            className={`flex items-center gap-2 rounded-md px-4 py-3 text-sm ${stockOk
+              ? 'bg-green-900/50 border border-green-700 text-green-300'
+              : 'bg-yellow-900/50 border border-yellow-700 text-yellow-300'
+              }`}
           >
             {stockOk ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
             {stockMessage}
@@ -171,16 +186,20 @@ export default function ProductionPage() {
 
         {/* Recipe Ingredients Preview */}
         {manualBatches && selectedItem !== '' && recipe?.ingredients && recipe.ingredients.length > 0 && (
-          <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-            <h3 className="text-sm font-semibold text-gray-300">Ingredients to be used (FIFO default)</h3>
-            <div className="divide-y divide-gray-700">
+          <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2">
+              Select Batches for Ingredients
+            </h3>
+            <div className="space-y-3">
               {recipe.ingredients.map((ing) => (
-                <div key={ing.composition_id} className="flex justify-between py-2 text-sm">
-                  <span className="text-gray-300">{ing.input_item_name}</span>
-                  <span className="text-gray-400 font-mono">
-                    {ing.quantity_required} × {quantity || 1}
-                  </span>
-                </div>
+                <IngredientBatchSelector
+                  key={ing.composition_id}
+                  ingredientName={ing.input_item_name}
+                  itemId={ing.input_item_id}
+                  quantityNeeded={ing.quantity_required * (Number(quantity) || 1)}
+                  onSelect={(batchId) => setSelectedBatches(prev => ({ ...prev, [ing.input_item_id]: batchId }))}
+                  selectedBatchId={selectedBatches[ing.input_item_id] || null}
+                />
               ))}
             </div>
           </div>
@@ -217,7 +236,7 @@ export default function ProductionPage() {
         )}
         {recordProduction.isError && (
           <p className="text-sm text-red-400">
-            Error: {recordProduction.error.message}
+            Error: {(recordProduction.error as any).response?.data?.detail || recordProduction.error.message}
           </p>
         )}
       </div>
