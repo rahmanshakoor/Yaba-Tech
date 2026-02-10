@@ -23,6 +23,8 @@ export interface InventorySummaryItem {
   item_name: string;
   unit: string;
   total_stock: number;
+  unit_cost: number;
+  total_value: number;
 }
 
 export interface RecipeIngredient {

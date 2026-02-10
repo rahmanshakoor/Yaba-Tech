@@ -20,7 +20,7 @@ export function useItems(type?: string) {
 }
 
 export function useInventorySummary() {
-  return useQuery<{ items: InventorySummaryItem[] }>({
+  return useQuery<{ items: InventorySummaryItem[]; total_inventory_value: number }>({
     queryKey: ['inventorySummary'],
     queryFn: async () => {
       const { data } = await api.get('/inventory/summary');
