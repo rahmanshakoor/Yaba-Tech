@@ -214,7 +214,7 @@ export default function DefinitionsPage() {
             </div>
             <div className="col-span-2">
               {selectedDish ? (
-                <RecipeBuilder dish={selectedDish} allItems={allItems} />
+                <RecipeBuilder dish={selectedDish} allItems={allItems} targetItemType={selectedDish.type} />
               ) : (
                 <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
                   Select a dish to view or edit its recipe
