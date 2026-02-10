@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.models import ItemType
+from src.models import ItemType, WasteReason
 
 
 class ItemCreate(BaseModel):
@@ -60,6 +60,7 @@ class ManualInvoiceLineItem(BaseModel):
     item_id: int
     quantity: float
     unit_cost: float
+    is_short_shipment: Optional[bool] = False
 
 
 class ManualInvoiceCreate(BaseModel):
@@ -142,3 +143,19 @@ class ReorderRecommendation(BaseModel):
 
 class ForecastingResponse(BaseModel):
     recommendations: list[ReorderRecommendation]
+
+
+class WasteRequest(BaseModel):
+    batch_id: int
+    quantity: float
+    reason: WasteReason
+
+
+class WasteResponse(BaseModel):
+    waste_id: int
+    batch_id: int
+    quantity: float
+    reason: WasteReason
+    cost_loss: float
+
+    model_config = {"from_attributes": True}
