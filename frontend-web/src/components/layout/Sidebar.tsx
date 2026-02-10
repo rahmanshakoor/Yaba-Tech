@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
+  BookOpen,
   Package,
   ChefHat,
   Factory,
@@ -9,6 +10,7 @@ import {
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/definitions', label: 'Definitions', icon: BookOpen },
   { to: '/inventory', label: 'Inventory', icon: Package },
   { to: '/recipes', label: 'Recipes', icon: ChefHat },
   { to: '/production', label: 'Production', icon: Factory },
