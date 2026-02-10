@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Package,
-  ChefHat,
+
   Factory,
   FileText,
 } from 'lucide-react';

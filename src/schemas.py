@@ -147,6 +147,8 @@ class ManualProductionRequest(BaseModel):
 class ReorderRecommendation(BaseModel):
     item_id: int
     item_name: str
+    unit: str
+    type: ItemType
     current_stock: float
     predicted_demand: float
     gap: float

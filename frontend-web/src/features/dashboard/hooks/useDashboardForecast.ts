@@ -17,13 +17,15 @@ function generateMockData(): ForecastItem[] {
   return items.map((item, index) => {
     const predicted = Math.floor(Math.random() * 60) + 10;
     const stock = Math.floor(Math.random() * predicted);
+    const gap = predicted - stock;
     return {
       item_id: index + 1,
-      name: item.name,
+      item_name: item.name,
       type: item.type,
       predicted_demand: predicted,
       current_stock: stock,
-      recommended_action: predicted - stock,
+      gap: gap,
+      recommendation: `Order ${gap} ${item.unit} of ${item.name}`,
       unit: item.unit,
     };
   });
@@ -34,8 +36,14 @@ export function useDashboardForecast() {
     queryKey: ['dashboardForecast'],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/forecasting/dashboard-summary');
-        return data;
+        const { data } = await api.get('/forecasting/reorder-recommendations', {
+          params: {
+            forecast_days: 1,
+            threshold: 0,
+          },
+        });
+        // The backend returns { recommendations: [...] }, so we need to extract the array
+        return data.recommendations;
       } catch {
         return generateMockData();
       }

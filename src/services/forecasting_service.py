@@ -110,6 +110,8 @@ async def get_reorder_recommendations(
                 {
                     "item_id": item.item_id,
                     "item_name": item.name,
+                    "unit": item.unit,
+                    "type": item.type,
                     "current_stock": current_stock,
                     "predicted_demand": round(predicted_demand, 2),
                     "gap": round(gap, 2),

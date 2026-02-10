@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Check } from 'lucide-react';
 import api from '../../services/api';

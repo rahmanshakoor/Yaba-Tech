@@ -10,8 +10,8 @@ export default function DailyPrepList({ items }: DailyPrepListProps) {
   const [doneIds, setDoneIds] = useState<Set<number>>(new Set());
 
   const prepItems = items
-    .filter((item) => item.recommended_action > 0)
-    .sort((a, b) => b.recommended_action - a.recommended_action);
+    .filter((item) => item.gap > 0)
+    .sort((a, b) => b.gap - a.gap);
 
   const markDone = (id: number) => {
     setDoneIds((prev) => new Set(prev).add(id));
@@ -52,7 +52,7 @@ export default function DailyPrepList({ items }: DailyPrepListProps) {
                   className={`border-b border-gray-50 ${isDone ? 'opacity-40' : ''}`}
                 >
                   <td className="px-5 py-3 font-medium text-gray-900">
-                    {item.name}
+                    {item.item_name}
                   </td>
                   <td className="px-5 py-3">
                     {isCritical ? (
@@ -66,14 +66,14 @@ export default function DailyPrepList({ items }: DailyPrepListProps) {
                     )}
                   </td>
                   <td className="px-5 py-3 font-bold text-gray-900">
-                    Prep {item.recommended_action} {item.unit}
+                    {item.recommendation}
                   </td>
                   <td className="px-5 py-3">
                     <button
                       type="button"
                       disabled={isDone}
                       onClick={() => markDone(item.item_id)}
-                      aria-label={`Mark ${item.name} done`}
+                      aria-label={`Mark ${item.item_name} done`}
                       className="p-1.5 rounded-md hover:bg-green-50 text-gray-400 hover:text-green-600 disabled:cursor-default disabled:hover:bg-transparent"
                     >
                       <Check size={16} />

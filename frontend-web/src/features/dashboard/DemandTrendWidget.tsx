@@ -32,7 +32,7 @@ export default function DemandTrendWidget({ items }: DemandTrendWidgetProps) {
             >
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  {item.name}
+                  {item.item_name}
                 </p>
                 <p className="text-xs text-gray-500">{item.type}</p>
               </div>

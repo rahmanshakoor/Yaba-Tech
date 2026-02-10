@@ -25,6 +25,8 @@ async def reorder_recommendations(
             {
                 "item_id": r["item_id"],
                 "item_name": r["item_name"],
+                "unit": r["unit"],
+                "type": r["type"],
                 "current_stock": r["current_stock"],
                 "predicted_demand": r["predicted_demand"],
                 "gap": r["gap"],
