@@ -16,6 +16,7 @@ from src.schemas import (
     WasteRequest,
     WasteResponse,
 )
+from src.services.cost_service import calculate_recipe_cost
 from src.services.inventory_service import produce_item
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
@@ -30,6 +31,7 @@ async def inventory_summary(
     items = items_result.scalars().all()
 
     summary_items = []
+    total_inventory_value = 0.0
     for item in items:
         batches_result = await db.execute(
             select(ItemsInventory).where(
@@ -40,16 +42,28 @@ async def inventory_summary(
         batches = batches_result.scalars().all()
         total = sum(b.quantity_current for b in batches)
         if total > 0:
+            # Use item's average_cost, or compute recipe cost for composed items
+            if item.average_cost and item.average_cost > 0:
+                unit_cost = item.average_cost
+            else:
+                unit_cost = await calculate_recipe_cost(db, item.item_id)
+            total_value = total * unit_cost
+            total_inventory_value += total_value
             summary_items.append(
                 InventorySummaryItem(
                     item_id=item.item_id,
                     item_name=item.name,
                     unit=item.unit,
                     total_stock=total,
+                    unit_cost=round(unit_cost, 2),
+                    total_value=round(total_value, 2),
                 )
             )
 
-    return InventorySummaryResponse(items=summary_items)
+    return InventorySummaryResponse(
+        items=summary_items,
+        total_inventory_value=round(total_inventory_value, 2),
+    )
 
 
 
@@ -161,6 +175,21 @@ async def check_stock(
         }
             
     return {"available": True, "max_producible": max_producible}
+
+
+@router.get("/cost/{item_id}")
+async def get_item_cost(
+    item_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Calculate and return the current cost for an item."""
+    result = await db.execute(select(Item).where(Item.item_id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    cost = await calculate_recipe_cost(db, item_id)
+    return {"item_id": item_id, "item_name": item.name, "unit_cost": round(cost, 2)}
 
 
 @router.post("/production/manual", response_model=ProductionResponse)
