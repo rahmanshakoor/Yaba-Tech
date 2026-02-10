@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageLayout } from './components/layout';
 import Dashboard from './pages/Dashboard';
+import DefinitionsPage from './pages/DefinitionsPage';
 import InventoryPage from './pages/InventoryPage';
 import RecipesPage from './pages/RecipesPage';
 import ProductionPage from './pages/ProductionPage';
@@ -18,6 +19,7 @@ function App() {
         <PageLayout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/definitions" element={<DefinitionsPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/production" element={<ProductionPage />} />
