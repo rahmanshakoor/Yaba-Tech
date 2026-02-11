@@ -17,7 +17,7 @@ interface BatchRow extends Record<string, unknown> {
   item_id: number;
 }
 
-type FilterType = 'All' | 'Raw' | 'Prepped';
+type FilterType = 'All' | 'Raw' | 'Prepped' | 'Dish';
 
 export default function InventoryPage() {
   const { data: allItems = [], isLoading: itemsLoading } = useItems();
@@ -170,17 +170,17 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+      <h1 className="text-2xl font-bold text-brand-black">Inventory</h1>
 
       {/* Filter Buttons */}
       <div className="flex gap-2">
-        {(['All', 'Raw', 'Prepped'] as FilterType[]).map((f) => (
+        {(['All', 'Raw', 'Prepped', 'Dish'] as FilterType[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === f
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              ? 'bg-brand-black text-brand-white'
+              : 'bg-white text-brand-black border border-brand-charcoal hover:bg-gray-50'
               }`}
           >
             {f}
@@ -192,8 +192,8 @@ export default function InventoryPage() {
 
       {/* Total Inventory Value */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">Total Inventory Value</span>
-        <span className="text-lg font-bold text-indigo-600">
+        <span className="text-sm font-semibold text-brand-charcoal">Total Inventory Value</span>
+        <span className="text-lg font-bold text-brand-black">
           ${(summaryData?.total_inventory_value ?? 0).toFixed(2)}
         </span>
       </div>

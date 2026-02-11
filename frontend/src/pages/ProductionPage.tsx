@@ -103,13 +103,13 @@ export default function ProductionPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <ChefHat size={28} className="text-amber-500" />
-        <h1 className="text-2xl font-bold text-gray-900">Production Station</h1>
+        <ChefHat size={28} className="text-brand-yellow" />
+        <h1 className="text-2xl font-bold text-brand-black">Production Station</h1>
       </div>
 
       {/* Chef Mode Form */}
-      <div className="bg-gray-900 text-white rounded-xl p-8 space-y-6">
-        <h2 className="text-xl font-bold text-amber-400">Chef Mode</h2>
+      <div className="bg-brand-black text-brand-white rounded-xl p-8 space-y-6">
+        <h2 className="text-xl font-bold text-brand-yellow">Chef Mode</h2>
 
         {/* Select Item */}
         <div className="space-y-1">
@@ -218,14 +218,14 @@ export default function ProductionPage() {
               checkStock.mutate();
             }}
             disabled={checkStock.isPending}
-            className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+            className="bg-gray-700 border-gray-600 text-brand-charcoal hover:bg-gray-600"
           >
             {checkStock.isPending ? 'Checking...' : 'Check Stock'}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={recordProduction.isPending}
-            className="bg-amber-500 text-gray-900 hover:bg-amber-400 border-0"
+            className="bg-brand-yellow text-brand-charcoal hover:bg-yellow-400 border-0"
           >
             {recordProduction.isPending ? 'Producing...' : 'Produce'}
           </Button>

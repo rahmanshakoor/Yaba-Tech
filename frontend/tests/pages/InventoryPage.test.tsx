@@ -8,16 +8,22 @@ vi.mock('../../src/services/api', () => ({
   default: {
     get: vi.fn().mockImplementation((url: string) => {
       if (url === '/items/') {
-        return Promise.resolve({ data: [
-          { item_id: 1, name: 'Tomato', unit: 'kg', type: 'Raw', shelf_life_days: 7, is_archived: false },
-          { item_id: 2, name: 'Prepped Sauce', unit: 'liters', type: 'Prepped', shelf_life_days: 3, is_archived: false },
-        ]});
+        return Promise.resolve({
+          data: [
+            { item_id: 1, name: 'Tomato', unit: 'kg', type: 'Raw', shelf_life_days: 7, is_archived: false },
+            { item_id: 2, name: 'Prepped Sauce', unit: 'liters', type: 'Prepped', shelf_life_days: 3, is_archived: false },
+            { item_id: 3, name: 'Lasagna', unit: 'portions', type: 'Dish', shelf_life_days: 2, is_archived: false },
+          ]
+        });
       }
       if (url === '/inventory/batches') {
-        return Promise.resolve({ data: [
-          { batch_id: 101, item_id: 1, quantity_initial: 10, quantity_current: 8, expiration_date: '2026-03-01' },
-          { batch_id: 102, item_id: 2, quantity_initial: 5, quantity_current: 3, expiration_date: '2026-02-15' },
-        ]});
+        return Promise.resolve({
+          data: [
+            { batch_id: 101, item_id: 1, quantity_initial: 10, quantity_current: 8, expiration_date: '2026-03-01' },
+            { batch_id: 102, item_id: 2, quantity_initial: 5, quantity_current: 3, expiration_date: '2026-02-15' },
+            { batch_id: 103, item_id: 3, quantity_initial: 20, quantity_current: 15, expiration_date: '2026-02-20' },
+          ]
+        });
       }
       return Promise.resolve({ data: [] });
     }),
@@ -67,5 +73,23 @@ describe('InventoryPage', () => {
 
     expect(screen.queryByText('Tomato')).not.toBeInTheDocument();
     expect(screen.getByText('Prepped Sauce')).toBeInTheDocument();
+  });
+  it('filters to show only Dish items when Dish filter is clicked', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<InventoryPage />);
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.queryByText('Tomato')).toBeInTheDocument();
+    });
+
+    const dishButton = screen.getByRole('button', { name: 'Dish' });
+    await user.click(dishButton);
+
+    // Tomato is Raw, Sauce is Prepped, Lasagna is Dish
+    // We expect ONLY Lasagna
+    expect(screen.queryByText('Tomato')).not.toBeInTheDocument();
+    expect(screen.queryByText('Prepped Sauce')).not.toBeInTheDocument();
+    expect(screen.getByText('Lasagna')).toBeInTheDocument();
   });
 });

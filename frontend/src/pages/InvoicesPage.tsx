@@ -29,7 +29,7 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+        <h1 className="text-2xl font-bold text-brand-black">Invoices</h1>
         <Button onClick={openAddModal}>
           <Plus size={16} className="inline mr-1" />
           Add Invoice
@@ -50,8 +50,8 @@ export default function InvoicesPage() {
                   key={inv.invoice_id}
                   onClick={() => setSelectedInvoice(inv)}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${selectedInvoice?.invoice_id === inv.invoice_id
-                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                      : 'hover:bg-gray-50 border border-transparent'
+                    ? 'bg-brand-yellow/10 text-brand-black border border-brand-yellow'
+                    : 'hover:bg-gray-50 border border-transparent'
                     }`}
                 >
                   <span className="block font-medium">{inv.supplier_name}</span>
@@ -69,8 +69,8 @@ export default function InvoicesPage() {
           {selectedInvoice ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <FileText size={24} className="text-indigo-600" />
-                <h2 className="text-lg font-semibold text-gray-800">
+                <FileText size={24} className="text-brand-blue" />
+                <h2 className="text-lg font-semibold text-brand-charcoal">
                   Invoice #{selectedInvoice.invoice_id}
                 </h2>
               </div>

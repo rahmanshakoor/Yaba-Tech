@@ -1,7 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-black: #000000;
+  --color-brand-charcoal: #373737;
+  --color-brand-white: #ffffff;
+  --color-brand-yellow: #fddc2d;
+  --color-brand-blue: #29b2ff;
+
+  --font-tajawal: "Tajawal", "sans-serif";
+}
+
+:root {
+  font-family: var(--font-tajawal);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
 }

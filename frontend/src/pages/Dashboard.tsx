@@ -24,7 +24,7 @@ function KPICard({ label, value, icon, color }: KPICardProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+          <p className="mt-1 text-2xl font-bold text-brand-black">{value}</p>
         </div>
         <div className={`p-3 rounded-lg ${color}`}>{icon}</div>
       </div>
@@ -91,7 +91,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-brand-black">Dashboard</h1>
 
       <div className="grid grid-cols-4 gap-4">
         <KPICard

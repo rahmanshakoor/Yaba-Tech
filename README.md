@@ -1,4 +1,4 @@
-# YABA — Yet Another Back-of-house App
+# YABA
 
 A full-stack **Kitchen Management System** built for food-service operations. YABA tracks inventory at the batch level, manages recipe-based production, logs waste, processes supplier invoices, and forecasts demand using statistical models.
 
