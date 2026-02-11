@@ -1,4 +1,4 @@
-"""YABA - Yet Another Back-of-house App. Main FastAPI application."""
+"""YABA. Main FastAPI application."""
 
 from contextlib import asynccontextmanager
 
@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="YABA - Yet Another Back-of-house App",
+    title="YABA",
     description="Kitchen management system with inventory, production, and forecasting.",
     version="0.1.0",
     lifespan=lifespan,
@@ -45,4 +45,4 @@ app.include_router(definitions.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to YABA - Yet Another Back-of-house App"}
+    return {"message": "Welcome to YABA"}

@@ -16,41 +16,35 @@ describe('InvoicesPage', () => {
     vi.clearAllMocks();
   });
 
-  it('opens the Add Invoice modal when clicking "Add Invoice"', async () => {
+  it('opens the Add Invoice modal with Manual form', async () => {
     const user = userEvent.setup();
     renderWithProviders(<InvoicesPage />);
 
     const addButton = screen.getByRole('button', { name: /add invoice/i });
     await user.click(addButton);
 
-    expect(screen.getByText('Auto OCR')).toBeInTheDocument();
-    expect(screen.getByText('Manually')).toBeInTheDocument();
+    expect(screen.getByLabelText(/supplier/i)).toBeInTheDocument();
+    expect(screen.getByText('Line Items')).toBeInTheDocument();
   });
 
-  it('shows the Manual form with Add Row when selecting "Manually"', async () => {
+  it('shows the Add Row button in the form', async () => {
     const user = userEvent.setup();
     renderWithProviders(<InvoicesPage />);
 
     const addButton = screen.getByRole('button', { name: /add invoice/i });
     await user.click(addButton);
-
-    const manualButton = screen.getByText('Manually');
-    await user.click(manualButton);
 
     await waitFor(() => {
       expect(screen.getByText('Add Row')).toBeInTheDocument();
     });
   });
 
-  it('allows adding multiple rows of ingredients in Manual form', async () => {
+  it('allows adding multiple rows of ingredients', async () => {
     const user = userEvent.setup();
     renderWithProviders(<InvoicesPage />);
 
     const addButton = screen.getByRole('button', { name: /add invoice/i });
     await user.click(addButton);
-
-    const manualButton = screen.getByText('Manually');
-    await user.click(manualButton);
 
     await waitFor(() => {
       expect(screen.getByText('Add Row')).toBeInTheDocument();

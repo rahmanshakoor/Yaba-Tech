@@ -97,7 +97,9 @@ class ItemsInventory(Base):
         Integer, ForeignKey("invoices.invoice_id"), nullable=True
     )
     source_production_id = Column(
-        Integer, ForeignKey("production_logs.log_id"), nullable=True
+        Integer,
+        ForeignKey("production_logs.log_id", use_alter=True, name="fk_inventory_production"),
+        nullable=True,
     )
     created_at = Column(DateTime, server_default=func.now())
 

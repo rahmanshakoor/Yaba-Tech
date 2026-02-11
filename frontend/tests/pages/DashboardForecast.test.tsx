@@ -16,38 +16,42 @@ vi.mock('../../src/services/api', () => ({
 const mockItems: ForecastItem[] = [
   {
     item_id: 1,
-    name: 'Pizza Dough',
+    item_name: 'Pizza Dough',
     type: 'Prepped',
     predicted_demand: 50,
     current_stock: 0,
-    recommended_action: 50,
+    gap: 50,
+    recommendation: 'Prep 50 kg',
     unit: 'kg',
   },
   {
     item_id: 2,
-    name: 'Burger',
+    item_name: 'Burger',
     type: 'Dish',
     predicted_demand: 80,
     current_stock: 40,
-    recommended_action: 40,
+    gap: 40,
+    recommendation: 'Prep 40 pcs',
     unit: 'pcs',
   },
   {
     item_id: 3,
-    name: 'Caesar Salad',
+    item_name: 'Caesar Salad',
     type: 'Dish',
     predicted_demand: 30,
     current_stock: 30,
-    recommended_action: 0,
+    gap: 0,
+    recommendation: 'None',
     unit: 'pcs',
   },
   {
     item_id: 4,
-    name: 'Soup Base',
+    item_name: 'Soup Base',
     type: 'Prepped',
     predicted_demand: 20,
     current_stock: 5,
-    recommended_action: 15,
+    gap: 15,
+    recommendation: 'Prep 15 liters',
     unit: 'liters',
   },
 ];
@@ -57,7 +61,7 @@ describe('DailyPrepList', () => {
     vi.clearAllMocks();
   });
 
-  it('shows only items where recommended_action > 0', () => {
+  it('shows only items where gap > 0', () => {
     renderWithProviders(<DailyPrepList items={mockItems} />);
     expect(screen.getByText('Pizza Dough')).toBeInTheDocument();
     expect(screen.getByText('Burger')).toBeInTheDocument();

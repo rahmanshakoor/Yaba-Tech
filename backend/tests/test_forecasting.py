@@ -1,6 +1,7 @@
 """Tests for forecasting service and ARIMA model."""
 
 import pytest
+import warnings
 from sqlalchemy import select
 
 from src.models import Item, ItemComposition, ItemsInventory, ItemType, ProductionLog
@@ -135,7 +136,9 @@ async def test_reorder_recommendations(db_session):
 async def test_arima_forecast_constant_data():
     """Test ARIMA forecast with constant input data (no variance)."""
     usage_data = [5.0] * 10
-    forecast = run_arima_forecast(usage_data, periods=3)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)  # Catch general warnings from statsmodels since ConvergenceWarning might be aliased or hard to import specifically without bloat
+        forecast = run_arima_forecast(usage_data, periods=3)
 
     assert len(forecast) == 3
     # With constant data, forecast should stay near 5.0

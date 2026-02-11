@@ -39,7 +39,7 @@ class DashboardLog(BaseModel):
     output_item_name: str
     input_item_name: str
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
