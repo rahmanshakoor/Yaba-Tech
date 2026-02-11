@@ -86,24 +86,7 @@ YABA uses **SQLite** (async, via `aiosqlite`) for local development. The databas
 
 ### Schema
 
-```
-┌───────────┐       ┌────────────────────┐       ┌──────────────────┐
-│   items   │──1:N──│  item_compositions │       │     invoices     │
-└───────────┘       └────────────────────┘       └──────────────────┘
-      │                                                   │
-      │ 1:N                                          1:N  │
-      ▼                                                   ▼
-┌──────────────────┐       ┌──────────────────┐
-│ items_inventory  │──1:N──│ production_logs  │
-│   (batches)      │       └──────────────────┘
-└──────────────────┘
-      │
-      │ 1:N
-      ▼
-┌──────────────────┐
-│   waste_logs     │
-└──────────────────┘
-```
+![Database Schema](yaba.db.png)
 
 #### Tables
 
