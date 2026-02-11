@@ -21,9 +21,34 @@ async def list_invoices(
 ):
     """List past invoices (summary view)."""
     result = await db.execute(
-        select(Invoice).order_by(Invoice.created_at.desc())
+        select(Invoice)
+        .options(
+            selectinload(Invoice.inventory_batches).selectinload(
+                ItemsInventory.item
+            )
+        )
+        .order_by(Invoice.created_at.desc())
     )
-    return result.scalars().all()
+    invoices = result.scalars().all()
+
+    # Flatten the structure for the response
+    for invoice in invoices:
+        invoice.batches = []
+        for batch in invoice.inventory_batches:
+            invoice.batches.append(
+                {
+                    "batch_id": batch.batch_id,
+                    "item_id": batch.item_id,
+                    "quantity_initial": batch.quantity_initial,
+                    "quantity_current": batch.quantity_current,
+                    "unit_cost": batch.unit_cost,
+                    "expiration_date": batch.expiration_date,
+                    "item_name": batch.item.name,
+                    "unit": batch.item.unit,
+                }
+            )
+
+    return invoices
 
 
 @router.post("/manual", response_model=InvoiceResponse, status_code=201)

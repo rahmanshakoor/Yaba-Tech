@@ -48,6 +48,18 @@ export interface ProductionLog {
   created_at: string;
 }
 
+
+export interface InvoiceBatch {
+  batch_id: number;
+  item_id: number;
+  quantity_initial: number;
+  quantity_current: number;
+  unit_cost: number;
+  expiration_date: string | null;
+  item_name: string;
+  unit: string;
+}
+
 export interface Invoice {
   invoice_id: number;
   supplier_name: string;
@@ -55,6 +67,7 @@ export interface Invoice {
   invoice_date: string | null;
   image_url: string | null;
   created_at: string | null;
+  batches: InvoiceBatch[];
 }
 
 export interface WasteLog {

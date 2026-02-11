@@ -80,6 +80,20 @@ class ManualInvoiceCreate(BaseModel):
     items: list[ManualInvoiceLineItem]
 
 
+
+class InvoiceBatchResponse(BaseModel):
+    batch_id: int
+    item_id: int
+    quantity_initial: float
+    quantity_current: float
+    unit_cost: float
+    expiration_date: Optional[datetime] = None
+    item_name: str
+    unit: str
+
+    model_config = {"from_attributes": True}
+
+
 class InvoiceResponse(BaseModel):
     invoice_id: int
     supplier_name: str
@@ -87,6 +101,7 @@ class InvoiceResponse(BaseModel):
     invoice_date: Optional[datetime] = None
     image_url: Optional[str] = None
     created_at: Optional[datetime] = None
+    batches: list[InvoiceBatchResponse] = []
 
     model_config = {"from_attributes": True}
 
