@@ -83,8 +83,8 @@ async def create_items(session: AsyncSession) -> dict[str, Item]:
         ("Pizza Dough", "Ball", 3, ItemType.PREPPED),
         ("Pizza Sauce", "Liter", 5, ItemType.PREPPED),
         # Dishes
-        ("Margherita Pizza", "Serving", 0, ItemType.DISH),
-        ("Marinara Pizza", "Serving", 0, ItemType.DISH),
+        ("Margherita Pizza", "Serving", 2, ItemType.DISH),
+        ("Marinara Pizza", "Serving", 2, ItemType.DISH),
     ]
 
     items: dict[str, Item] = {}
@@ -186,6 +186,15 @@ async def create_initial_invoices(
         batches[name] = [batch]
 
     await session.flush()
+
+    # Update Item.average_cost for raw ingredients
+    for name, batch_list in batches.items():
+        if batch_list:
+            # For seed data, we just take the first batch's cost as average
+            item = items[name]
+            item.average_cost = batch_list[0].unit_cost
+            session.add(item)
+    
     _log(
         f"Created initial invoice #{invoice.invoice_id} "
         f"(${invoice.total_cost:,.2f}) with {len(prices)} batches."
@@ -241,11 +250,21 @@ async def simulate_daily_production(
         # If remaining > 0 the stock ran out – acceptable for demo data.
 
     # --- Create prepped-item batches ---
+    
+    # Calculate Unit Costs (Per Unit, not per pizza)
+    # Dough: 0.2 Kg Flour * Flour Cost
+    flour_cost_per_kg = batches["00 Flour"][0].unit_cost
+    dough_unit_cost = 0.2 * flour_cost_per_kg
+
+    # Sauce: 1 Can Tomato * Tomato Cost (Recipe is 1 Can -> 1 Liter)
+    tomato_cost_per_can = batches["San Marzano Tomatoes"][0].unit_cost
+    sauce_unit_cost = 1.0 * tomato_cost_per_can
+    
     dough_batch = ItemsInventory(
         item_id=items["Pizza Dough"].item_id,
         quantity_initial=float(pizza_count),
         quantity_current=0.0,  # fully consumed immediately
-        unit_cost=batches["00 Flour"][0].unit_cost * flour_per_pizza,
+        unit_cost=dough_unit_cost,
         expiration_date=day_date + timedelta(days=3),
         created_at=day_date,
     )
@@ -253,22 +272,41 @@ async def simulate_daily_production(
         item_id=items["Pizza Sauce"].item_id,
         quantity_initial=pizza_count * 0.1,
         quantity_current=0.0,
-        unit_cost=batches["San Marzano Tomatoes"][0].unit_cost * tomato_per_pizza,
+        unit_cost=sauce_unit_cost,
         expiration_date=day_date + timedelta(days=5),
         created_at=day_date,
     )
     session.add_all([dough_batch, sauce_batch])
     await session.flush()
 
+    # Update Prepped Items average cost (idempotent, but keeps it current)
+    items["Pizza Dough"].average_cost = dough_unit_cost
+    items["Pizza Sauce"].average_cost = sauce_unit_cost
+
     # --- Create the dish batch (Margherita Pizza) ---
+    # Cost = 1 Dough + 0.1 Sauce + 0.1 Cheese + 1 Basil
+    cheese_cost_per_kg = batches["Mozzarella Cheese"][0].unit_cost
+    basil_cost_per_bunch = batches["Fresh Basil"][0].unit_cost
+
+    pizza_unit_cost = (
+        (1.0 * dough_unit_cost) +
+        (0.1 * sauce_unit_cost) +
+        (0.1 * cheese_cost_per_kg) +
+        (1.0 * basil_cost_per_bunch)
+    )
+
     dish_batch = ItemsInventory(
         item_id=items["Margherita Pizza"].item_id,
         quantity_initial=float(pizza_count),
         quantity_current=0.0,  # all sold
-        unit_cost=0.0,
+        unit_cost=pizza_unit_cost,
         created_at=day_date,
     )
     session.add(dish_batch)
+    
+    # Update Dish average cost
+    items["Margherita Pizza"].average_cost = pizza_unit_cost
+
     await session.flush()
 
     # --- Production logs: link input → output ---

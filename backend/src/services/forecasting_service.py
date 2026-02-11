@@ -115,7 +115,7 @@ async def get_reorder_recommendations(
                     "current_stock": current_stock,
                     "predicted_demand": round(predicted_demand, 2),
                     "gap": round(gap, 2),
-                    "recommendation": f"Order {round(gap, 2)} {item.unit} of {item.name}",
+                    "recommendation": f"We need {round(gap, 2)} {item.unit}s of {item.name}",
                 }
             )
 
