@@ -73,7 +73,7 @@ frontend/
 │   │   ├── dashboard/       # DailyPrepList, DemandTrendWidget, forecast hooks
 │   │   ├── inventory/       # InventoryTable, WasteModal, StockAdjustment
 │   │   ├── invoices/        # InvoiceUploader, ManualInvoiceForm
-│   │   ├── production/      # ProductionForm, ProductionLogTable, IngredientBatchSelector
+│   │   ├── production/      # ProduceForm, DepleteForm, ProductionForm, ProductionLogTable
 │   │   └── recipes/         # RecipeBuilder, RecipeList
 │   ├── services/
 │   │   └── api.ts           # Axios client (baseURL: http://localhost:8000)
@@ -100,7 +100,7 @@ frontend/
 | `/definitions` | Definitions | Item master data CRUD (Raw, Prepped, Dish) |
 | `/inventory` | Inventory | Stock summary by item, batch details, waste logging |
 | `/recipes` | Recipes | Recipe builder and ingredient composition editor |
-| `/production` | Production | Record production runs, stock checks, production history |
+| `/production` | Production | Record production runs or stock depletions via toggle, stock checks, production history |
 | `/invoices` | Invoices | Invoice list, manual entry, OCR image upload |
 
 ---
@@ -125,8 +125,9 @@ App.tsx
     ├── RecipesPage
     │   ├── RecipeList
     │   └── RecipeBuilder
-    ├── ProductionPage
-    │   ├── ProductionForm
+    ├── ProductionPage (produce / deplete toggle)
+    │   ├── ProduceForm (recipe-based production)
+    │   ├── DepleteForm (stock depletion for sales/POS)
     │   ├── IngredientBatchSelector
     │   └── ProductionLogTable
     └── InvoicesPage
