@@ -135,6 +135,7 @@ All endpoints return JSON. The base URL is `http://localhost:8000`.
 | GET | `/inventory/check-stock/{item_id}` | Check ingredient availability for production |
 | GET | `/inventory/cost/{item_id}` | Calculate current item cost |
 | POST | `/inventory/production/manual` | Manual production (deduct inputs, create output) |
+| POST | `/inventory/deplete` | Log stock depletion (sales/POS orders) with quantity validation |
 | POST | `/inventory/waste` | Log waste and record cost loss |
 
 ### Production — `/production`

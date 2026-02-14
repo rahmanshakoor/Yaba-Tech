@@ -9,7 +9,7 @@ A full-stack **Kitchen Management System** built for food-service operations. YA
 | Module | Capabilities |
 |---|---|
 | **Inventory** | Batch-level stock tracking (FIFO), expiration dates, unit cost per batch, stock adjustments |
-| **Production** | Recipe-based ingredient deduction, production logging with full traceability, revert support |
+| **Production** | Recipe-based ingredient deduction, production logging with full traceability, revert support, stock depletion logging (sales/POS) |
 | **Recipes** | Hierarchical composition (Raw → Prepped → Dish), cost roll-up calculations |
 | **Costing** | Automatic recipe cost from ingredient costs, waste cost tracking, daily aggregation |
 | **Waste** | Log waste by reason (Spoiled, Dropped, Burned, Theft), cost-loss calculation |
