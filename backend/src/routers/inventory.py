@@ -15,9 +15,10 @@ from src.schemas import (
     ProductionResponse,
     WasteRequest,
     WasteResponse,
+    DepleteStockRequest,
 )
 from src.services.cost_service import calculate_recipe_cost
-from src.services.inventory_service import produce_item
+from src.services.inventory_service import produce_item, deplete_item_stock
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
@@ -246,3 +247,21 @@ async def log_waste(
     await db.commit()
     await db.refresh(waste_entry)
     return waste_entry
+
+
+@router.post("/deplete", status_code=200)
+async def deplete_stock(
+    request: DepleteStockRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Deplete stock for an item (e.g. sales, usage) using FIFO."""
+    try:
+        result = await deplete_item_stock(
+            db,
+            item_id=request.item_id,
+            quantity=request.quantity,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

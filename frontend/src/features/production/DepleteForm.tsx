@@ -128,7 +128,7 @@ export default function DepleteForm() {
         <Button
           onClick={handleSubmit}
           disabled={deplete.isPending || isInsufficientStock}
-          className="bg-blue-600 text-white hover:bg-blue-500 border-0 px-8 py-3 text-base"
+          className="bg-brand-yellow text-brand-charcoal hover:bg-yellow-400 border-0"
         >
           {deplete.isPending ? 'Logging...' : 'Log Depletion'}
         </Button>

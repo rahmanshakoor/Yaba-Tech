@@ -183,6 +183,7 @@ class WasteRequest(BaseModel):
     reason: WasteReason
 
 
+
 class WasteResponse(BaseModel):
     waste_id: int
     batch_id: int
@@ -191,3 +192,8 @@ class WasteResponse(BaseModel):
     cost_loss: float
 
     model_config = {"from_attributes": True}
+
+
+class DepleteStockRequest(BaseModel):
+    item_id: int
+    quantity: float

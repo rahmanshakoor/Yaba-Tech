@@ -270,3 +270,52 @@ async def produce_item(
         "quantity_produced": quantity_to_produce,
         "ingredients_used": all_usage,
     }
+
+
+async def deplete_item_stock(
+    session: AsyncSession,
+    item_id: int,
+    quantity: float,
+) -> dict:
+    """Deplete stock for an item using FIFO strategy.
+
+    Returns:
+        Dict with depletion details.
+
+    Raises:
+        ValueError: If stock is insufficient.
+    """
+    if quantity <= 0:
+         raise ValueError("Quantity must be positive")
+
+    # 1. Check total stock
+    total_stock = await get_item_stock(session, item_id)
+    if total_stock < quantity:
+         raise ValueError(f"Insufficient stock: have {total_stock}, need {quantity}")
+
+    # 2. Get batches FIFO
+    batches = await get_fifo_batches(session, item_id)
+    
+    remaining = quantity
+    usage_details = []
+
+    for batch in batches:
+        if remaining <= 0:
+            break
+
+        deduct = min(batch.quantity_current, remaining)
+        batch.quantity_current -= deduct
+        remaining -= deduct
+
+        usage_details.append({
+            "batch_id": batch.batch_id,
+            "quantity_deducted": deduct
+        })
+    
+    await session.commit()
+    
+    return {
+        "item_id": item_id,
+        "total_depleted": quantity,
+        "batches_affected": usage_details
+    }

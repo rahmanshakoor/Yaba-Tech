@@ -170,7 +170,6 @@ All endpoints return JSON. The base URL is `http://localhost:8000`.
 | `cost_service` | Recursive recipe cost roll-up from ingredient unit costs |
 | `forecasting_service` | ARIMA/SARIMA time-series demand prediction |
 | `recipe_service` | Recipe composition lookup and validation |
-| `ocr_service` | Invoice image OCR parsing |
 | `unit_conversion` | Unit conversion between kg, g, liter, ml, etc. |
 
 ---
